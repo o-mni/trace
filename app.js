@@ -9,7 +9,6 @@ const CONFIG = {
     OTX_API_KEY: "",
     URLHAUS_API_KEY: "",
     THREATFOX_API_KEY: "",
-    HIBP_API_KEY: "",
     SCREENSHOT_API_KEY: ""
 };
 
@@ -59,7 +58,6 @@ const KNOWN_SAFE_DOMAINS = [
 ];
 
 const brandList = ["Microsoft", "Google", "Amazon", "Apple", "Meta", "PayPal", "Adobe", "Dropbox", "GitHub"];
-const disposableProviders = ["mailinator.com", "guerrillamail.com", "10minutemail.com", "tempmail.com", "yopmail.com"];
 const homographMap = {
     o: ["о", "Ｏ", "ο"],
     a: ["а", "ａ", "α"],
@@ -72,6 +70,9 @@ const homographMap = {
     n: ["п", "ń"]
 };
 
+const hashStr = (s) => Math.abs(s.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0));
+
+
 const selectors = {
     themeToggle: document.querySelector("#theme-toggle"),
     historyTab: document.querySelector("#history-tab"),
@@ -81,8 +82,7 @@ const selectors = {
     analysisToggleBtn: document.querySelector("#analysis-toggle-btn"),
     analysisExpander: document.querySelector("#analysis-expander"),
     inputTitle: document.querySelector("#input-title"),
-    urlInput: document.querySelector("#url-input"),
-    emailInput: document.querySelector("#email-input"),
+    mainInput: document.querySelector("#main-input"),
     investigationForm: document.querySelector("#investigation-form"),
     verdictLabel: document.querySelector("#verdict-label"),
     verdictDesc: document.querySelector("#verdict-desc"),
@@ -100,7 +100,11 @@ const selectors = {
     exportPanel: document.querySelector("#export-panel"),
     clearHistory: document.querySelector("#clear-history"),
     collapsibleTemplate: document.querySelector("#collapsible-card-template"),
-    summaryPanel: document.querySelector("#summary-panel")
+    summaryPanel: document.querySelector("#summary-panel"),
+    infoBtn: document.querySelector("#info-btn"),
+    infoModal: document.querySelector("#info-modal"),
+    infoModalClose: document.querySelector("#info-modal-close"),
+    infoModalBackdrop: document.querySelector("#info-modal-backdrop")
 };
 
 const sanitize = (value) => {
@@ -159,16 +163,14 @@ const getRiskColor = (score) => {
 const getSummaryIndicators = (context) => {
     const items = [];
     if (context.hasRedirect) items.push("Redirect chain detected");
-    if (context.brandImpersonation.length) items.push(`Brand impersonation: ${context.brandImpersonation.join(", ")}`);
-    if (context.homograph.length) items.push(`Homograph indicators found`);
-    if (context.disposable) items.push("Disposable email provider");
-    if (context.breachCount > 0) items.push(`Exposed in ${context.breachCount} breach(es)`);
+    if (context.brandImpersonation?.length) items.push(`Brand impersonation: ${context.brandImpersonation.join(", ")}`);
+    if (context.homograph?.length) items.push("Homograph indicators found");
     if (context.vtScore >= 5) items.push(`VirusTotal detections: ${context.vtScore}/70`);
     if (!items.length) items.push("No high risk indicators detected");
     return items;
 };
 
-const createCollapsibleSection = ({ title, meta, htmlContent }) => {
+const createCollapsibleSection = ({ title, meta, htmlContent, sectionId }) => {
     const template = selectors.collapsibleTemplate.content.cloneNode(true);
     const card = template.querySelector(".collapsible-card");
     const toggle = card.querySelector(".collapsible-toggle");
@@ -176,6 +178,7 @@ const createCollapsibleSection = ({ title, meta, htmlContent }) => {
     const metaEl = card.querySelector(".collapsible-meta");
     const content = card.querySelector(".collapsible-content");
 
+    if (sectionId) card.dataset.sectionId = sectionId;
     titleEl.textContent = title;
     metaEl.textContent = meta;
     content.innerHTML = htmlContent;
@@ -187,6 +190,17 @@ const createCollapsibleSection = ({ title, meta, htmlContent }) => {
     });
 
     return card;
+};
+
+const updateSectionContent = (sectionId, htmlContent, newMeta) => {
+    const card = selectors.findingsSections?.querySelector(`[data-section-id="${CSS.escape(sectionId)}"]`);
+    if (!card) return;
+    const content = card.querySelector(".collapsible-content");
+    if (content) content.innerHTML = htmlContent;
+    if (newMeta !== undefined) {
+        const metaEl = card.querySelector(".collapsible-meta");
+        if (metaEl) metaEl.textContent = newMeta;
+    }
 };
 
 const classifyDetailSeverity = (text) => {
@@ -322,6 +336,8 @@ const summarizeRiskDetails = (breakdown) => {
     return breakdown.map(item => `${item.label}: +${item.value}`).join("\n");
 };
 
+const detectInputType = () => "url";
+
 const parseUserInput = (input, type) => {
     const cleaned = input.trim();
     if (!cleaned) return null;
@@ -340,9 +356,6 @@ const parseUserInput = (input, type) => {
     }
     if (type === "domain") {
         return cleaned.replace(/^https?:\/\//i, "").replace(/\/$/, "");
-    }
-    if (type === "email") {
-        return cleaned.toLowerCase();
     }
     return null;
 };
@@ -402,30 +415,7 @@ const buildPlaceholderUrlContext = (input) => {
     };
 };
 
-const buildPlaceholderEmailContext = (input) => {
-    const [local, domain] = input.split("@");
-    const placeholder = buildPlaceholderUrlContext(domain || input);
-    placeholder.email = {
-        address: input,
-        domain,
-        breachIntelligence: [
-            { name: "Example Breach", date: "2024-03-12", data: "Email addresses, passwords" }
-        ],
-        exposure: placeholder.exposureSearch,
-        disposable: disposableProviders.some(provider => input.endsWith(`@${provider}`))
-    };
-    placeholder.breachCount = placeholder.email.breachIntelligence.length;
-    placeholder.domainAgeDays = placeholder.ageDays;
-    placeholder.knownPhishingSource = /support|alert|billing/.test(local);
-    return placeholder;
-};
-
-const buildInvestigationContext = (input, type) => {
-    if (type === "email") {
-        return buildPlaceholderEmailContext(input);
-    }
-    return buildPlaceholderUrlContext(input);
-};
+const buildInvestigationContext = (input) => buildPlaceholderUrlContext(input);
 
 const buildVerdictView = (score, evidenceCount) => {
     const verdictKey = mapVerdict(score, evidenceCount);
@@ -487,7 +477,14 @@ const renderCollapsibleSections = (sections) => {
     selectors.findingsSections.innerHTML = "";
     if (!sections.length) return;
     sections.forEach((section) => {
-        selectors.findingsSections.appendChild(createCollapsibleSection(section));
+        if (section.divider) {
+            const el = document.createElement("div");
+            el.className = "findings-divider";
+            el.innerHTML = `<span class="findings-divider-label">${sanitize(section.divider)}</span><code class="findings-divider-value">${sanitize(section.value || "")}</code>`;
+            selectors.findingsSections.appendChild(el);
+        } else {
+            selectors.findingsSections.appendChild(createCollapsibleSection(section));
+        }
     });
 };
 
@@ -531,13 +528,7 @@ const renderInvestigation = (input, type, mode) => {
     addToHistory(entry);
 
     selectors.inputTitle.textContent = `Investigation`;
-    if (type === "url") {
-        selectors.urlInput.value = formatted;
-        selectors.emailInput.value = "";
-    } else {
-        selectors.emailInput.value = formatted;
-        selectors.urlInput.value = "";
-    }
+    selectors.mainInput.value = formatted;
 
     const scoreBreakdown = report.breakdown.map(item => `<li>${sanitize(item.label)} <strong>+${item.value}</strong></li>`).join("");
     const sslCard = buildModalSection("SSL Analysis", [
@@ -566,81 +557,32 @@ const renderInvestigation = (input, type, mode) => {
     ]);
     const analysisSections = [];
 
+    // Update type badge in summary
+    const typeBadge = document.getElementById("ioc-type-badge");
+    if (typeBadge) {
+        typeBadge.className = "ioc-type-badge url-type";
+        typeBadge.textContent = "🔗 URL / Domain Investigation";
+    }
+
     const evidenceItems = [
-        `Risk score formula reports ${report.score} / 100`,
-        `Domain age: ${sanitize(context.domainAgeDays.toString())} days`,
-        `Redirect evidence: ${context.hasRedirect ? "Yes" : "No"}`
+        `Risk score: ${report.score} / 100`,
+        `Domain age: ${context.domainAgeDays} days`,
+        `Redirect chain: ${context.hasRedirect ? "Detected" : "None"}`
     ];
     const technicalItems = [
-        `VirusTotal score approximation: ${context.vtScore} detections`,
-        `Brand impersonation match: ${context.brandImpersonation.length ? context.brandImpersonation.join(", ") : "None"}`,
-        `Homograph characters identified: ${context.homograph.length ? context.homograph.map(item => item.character).join(", ") : "None"}`
+        `VirusTotal approximation: ${context.vtScore} detections`,
+        `Brand impersonation: ${context.brandImpersonation.length ? context.brandImpersonation.join(", ") : "None"}`,
+        `Homograph characters: ${context.homograph.length ? context.homograph.map(i => i.character).join(", ") : "None"}`
     ];
-    const infrastructureItems = [
-        `A/NS/MX footprint available`,
-        `Hosting provider: ${sanitize(context.hosting.provider)}`,
-        `Country: ${sanitize(context.hosting.country)}`
-    ];
-
-    analysisSections.push({
-        title: "Evidence Summary",
-        meta: `${report.score} risk points`,
-        htmlContent: buildEvidenceCard("Evidence & Guidance", evidenceItems)
-    });
-
-    analysisSections.push({
-        title: "Technical Indicators",
-        meta: `${technicalItems.length} indicators`,
-        htmlContent: buildEvidenceCard("Technical walk-through", technicalItems)
-    });
-
-    analysisSections.push({
-        title: "Risk Scoring Calculation",
-        meta: `${report.breakdown.length} factors`,
-        htmlContent: `<div class="info-card"><h3>Scoring Breakdown</h3><ul class="info-list">${report.breakdown.map(item => `<li>${sanitize(item.label)}<strong>+${item.value}</strong></li>`).join("")}</ul></div>`
-    });
-
-    if (true) {
-        analysisSections.push({
-            title: "Infrastructure & DNS",
-            meta: "Network & hosting overview",
-            htmlContent: `${dnsCard}${hostingCard}`
-        });
-        analysisSections.push({
-            title: "WHOIS & Domain History",
-            meta: "Registration and ownership",
-            htmlContent: whoisCard
-        });
-        if (type === "url") {
-            analysisSections.push({
-                title: "Redirect Analysis",
-                meta: `${context.redirectChain.length} hops`,
-                htmlContent: `<div class="info-card"><h3>Redirect chain</h3><ol class="info-list">${context.redirectChain.map(hop => `<li>${linkifyText(hop)}</li>`).join("")}</ol></div>`
-            });
-            analysisSections.push({
-                title: "Screenshot & Page Preview",
-                meta: "Placeholder only",
-                htmlContent: buildScreenshotSection(formatted)
-            });
-        }
-        if (type === "email") {
-            analysisSections.push({
-                title: "Exposure Search",
-                meta: "Public mentions and leaks",
-                htmlContent: `<div class="info-card"><h3>Exposure channels</h3><ul class="info-list"><li>GitHub: ${sanitize(context.email.exposure.github[0])}</li><li>Paste Sites: ${sanitize(context.email.exposure.paste[0])}</li><li>Forums: ${sanitize(context.email.exposure.forums[0])}</li><li>Public mentions: ${sanitize(context.email.exposure.mentions[0])}</li></ul></div>`
-            });
-            analysisSections.push({
-                title: "Disposable Email Detection",
-                meta: context.disposable ? "Disposable provider detected" : "Provider appears non-disposable",
-                htmlContent: `<div class="info-card"><p>${context.disposable ? "This email belongs to a disposable email provider. Handle with suspicion." : "No disposable email provider detected."}</p></div>`
-            });
-        }
-        analysisSections.push({
-            title: "Brand Impersonation & Homographs",
-            meta: "Spoofing signals",
-            htmlContent: `<div class="info-card"><p>Brand impersonation matches: ${sanitize(context.brandImpersonation.join(", ") || "None")}</p><p>Unicode spoofing evidence: ${sanitize(context.homograph.map(item => item.character).join(", ") || "None")}</p></div>`
-        });
-    }
+    analysisSections.push({ title: "Evidence Summary", meta: `${report.score} risk points`, htmlContent: buildEvidenceCard("Evidence & Guidance", evidenceItems) });
+    analysisSections.push({ title: "Technical Indicators", meta: `${technicalItems.length} indicators`, htmlContent: buildEvidenceCard("Technical walk-through", technicalItems) });
+    analysisSections.push({ title: "Risk Scoring", meta: `${report.breakdown.length} factors`, htmlContent: `<div class="info-card"><h3>Scoring Breakdown</h3><ul class="info-list">${report.breakdown.map(item => `<li>${sanitize(item.label)}<strong>+${item.value}</strong></li>`).join("")}</ul></div>` });
+    analysisSections.push({ title: "Infrastructure & DNS", meta: "Network & hosting overview", htmlContent: `${dnsCard}${hostingCard}` });
+    analysisSections.push({ title: "WHOIS & Domain History", meta: "Registration and ownership", htmlContent: whoisCard });
+    analysisSections.push({ title: "SSL Certificate", meta: context.ssl.status, htmlContent: sslCard });
+    analysisSections.push({ title: "Redirect Analysis", meta: `${context.redirectChain.length} hop(s)`, htmlContent: `<div class="info-card"><h3>Redirect chain</h3><ol class="info-list">${context.redirectChain.map(hop => `<li>${linkifyText(hop)}</li>`).join("")}</ol></div>` });
+    analysisSections.push({ title: "Screenshot & Page Preview", meta: "Placeholder only", htmlContent: buildScreenshotSection(formatted) });
+    analysisSections.push({ title: "Brand Impersonation & Homographs", meta: "Spoofing signals", htmlContent: `<div class="info-card"><p>Brand matches: ${sanitize(context.brandImpersonation.join(", ") || "None")}</p><p>Unicode spoofing: ${sanitize(context.homograph.map(i => i.character).join(", ") || "None")}</p></div>` });
 
     renderCollapsibleSections(analysisSections);
     updateVerdictUI(report.score, analysisSections.length);
@@ -836,19 +778,13 @@ selectors.sidebarOverlay?.addEventListener("click", closeSidebar);
 
 selectors.investigationForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const urlValue = selectors.urlInput.value.trim();
-    const emailValue = selectors.emailInput.value.trim();
-    if (!urlValue && !emailValue) {
-        alert("Please enter a URL or an email address to investigate.");
+    const value = selectors.mainInput.value.trim();
+    if (!value) {
+        alert("Please enter a URL, domain, or email address to investigate.");
         return;
     }
-    if (urlValue && emailValue) {
-        alert("Please provide either a URL or an email address, not both.");
-        return;
-    }
-    const type = emailValue ? "email" : "url";
-    const input = emailValue || urlValue;
-    renderInvestigation(input, type, STATE.mode);
+    const type = detectInputType(value);
+    renderInvestigation(value, type, STATE.mode);
 });
 
 selectors.exportHtml.addEventListener("click", generateHtmlReport);
@@ -863,3 +799,13 @@ selectors.clearHistory.addEventListener("click", () => {
 });
 
 attachHistoryListeners();
+
+const openInfoModal = () => selectors.infoModal?.classList.remove("hidden");
+const closeInfoModal = () => selectors.infoModal?.classList.add("hidden");
+
+selectors.infoBtn?.addEventListener("click", openInfoModal);
+selectors.infoModalClose?.addEventListener("click", closeInfoModal);
+selectors.infoModalBackdrop?.addEventListener("click", closeInfoModal);
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !selectors.infoModal?.classList.contains("hidden")) closeInfoModal();
+});

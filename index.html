@@ -19,6 +19,7 @@
                 </div>
             </div>
             <div class="nav-actions">
+                <button id="info-btn" class="icon-btn info-btn" title="About LINKINT &amp; API Credits">ⓘ</button>
                 <button id="theme-toggle" class="icon-btn" title="Toggle theme">🌙</button>
             </div>
         </header>
@@ -41,23 +42,20 @@
                 <section class="panel-card input-panel centered-panel">
                     <div class="panel-header">
                         <div>
-                            <h2 id="input-title">URL / Email Investigation</h2>
-                            <p class="panel-description">Enter either a URL or an email address to start the
-                                investigation.</p>
+                            <h2 id="input-title">URL / Domain Investigation</h2>
+                            <p class="panel-description">Enter a URL or domain to begin triage.</p>
                         </div>
                     </div>
                     <form id="investigation-form" class="investigation-form">
-                        <label class="visually-hidden" for="url-input">URL or domain input</label>
-                        <input id="url-input" type="text" placeholder="Paste URL or domain for investigation"
-                            autocomplete="off" />
-                        <label class="visually-hidden" for="email-input">Email input</label>
-                        <input id="email-input" type="email" placeholder="Enter email for investigation"
-                            autocomplete="off" />
-                        <button type="submit" class="primary large">Run Investigation</button>
+                        <label class="visually-hidden" for="main-input">URL or domain</label>
+                        <input id="main-input" type="text" placeholder="Enter a URL or domain…"
+                            autocomplete="off" spellcheck="false" />
+                        <button type="submit" class="primary large">Investigate</button>
                     </form>
                 </section>
 
                 <section class="panel-card summary-panel hidden" id="summary-panel">
+                    <div id="ioc-type-badge" class="ioc-type-badge" aria-live="polite"></div>
                     <div class="summary-grid">
                         <article class="summary-card verdict-card" id="verdict-card">
                             <div class="summary-title">Final Verdict</div>
@@ -119,6 +117,67 @@
             </section>
         </main>
 
+    </div>
+
+    <!-- Info / About modal -->
+    <div class="info-modal hidden" id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+        <div class="info-modal-backdrop" id="info-modal-backdrop"></div>
+        <div class="info-modal-card">
+            <div class="info-modal-header">
+                <h2 id="info-modal-title">About LINKINT</h2>
+                <button class="icon-btn" id="info-modal-close" title="Close">✕</button>
+            </div>
+            <div class="info-modal-body">
+                <div class="info-beta-banner">
+                    <span class="info-beta-pill">BETA</span>
+                    <span>This tool is in active development — features may be incomplete or change without notice.</span>
+                </div>
+                <section class="info-section">
+                    <h3>What is LINKINT?</h3>
+                    <p>LINKINT is a lightweight, browser-based OSINT workbench. It originated as a personal project to support basic <strong>Incident Response (IR)</strong> tasks — quickly triaging URLs and domains during an investigation without having to switch between multiple tools. It is intended for personal use only and is not affiliated with, endorsed by, or associated with any commercial product or organisation.</p>
+                </section>
+                <section class="info-section">
+                    <h3>How it works</h3>
+                    <p>LINKINT does not perform any independent threat analysis. It acts as a client-side interface that queries publicly available third-party APIs and formats their responses in a structured, readable layout. All intelligence, data, and findings displayed originate entirely from the service providers listed below — LINKINT is simply a presentation layer built for fast IR triage.</p>
+                </section>
+                <section class="info-section">
+                    <h3>Third-party services &amp; credits</h3>
+                    <p class="info-note">All data, findings, and intellectual property displayed by LINKINT belong exclusively to the respective service providers. No ownership, authorship, or credit is claimed by this project.</p>
+                    <ul class="info-api-list">
+                        <li class="info-api-item">
+                            <span class="info-api-name">VirusTotal</span>
+                            <span class="info-api-desc">URL, domain, and file threat intelligence</span>
+                            <a class="info-api-link" href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">virustotal.com ↗</a>
+                        </li>
+                        <li class="info-api-item">
+                            <span class="info-api-name">AbuseIPDB</span>
+                            <span class="info-api-desc">IP address abuse and threat reporting database</span>
+                            <a class="info-api-link" href="https://www.abuseipdb.com" target="_blank" rel="noopener noreferrer">abuseipdb.com ↗</a>
+                        </li>
+                        <li class="info-api-item">
+                            <span class="info-api-name">OTX AlienVault</span>
+                            <span class="info-api-desc">Open threat exchange and indicator intelligence</span>
+                            <a class="info-api-link" href="https://otx.alienvault.com" target="_blank" rel="noopener noreferrer">otx.alienvault.com ↗</a>
+                        </li>
+                        <li class="info-api-item">
+                            <span class="info-api-name">URLhaus</span>
+                            <span class="info-api-desc">Malicious URL and malware distribution tracking</span>
+                            <a class="info-api-link" href="https://urlhaus.abuse.ch" target="_blank" rel="noopener noreferrer">urlhaus.abuse.ch ↗</a>
+                        </li>
+                        <li class="info-api-item">
+                            <span class="info-api-name">ThreatFox</span>
+                            <span class="info-api-desc">IOC sharing and threat intelligence database</span>
+                            <a class="info-api-link" href="https://threatfox.abuse.ch" target="_blank" rel="noopener noreferrer">threatfox.abuse.ch ↗</a>
+                        </li>
+                    </ul>
+                </section>
+                <section class="info-section info-disclaimer">
+                    <h3>Disclaimer</h3>
+                    <p>This tool is a personal, non-commercial project intended solely for educational and research use. All trademarks, brand names, data, and intellectual property presented through LINKINT remain the exclusive property of their respective service providers. This project does not claim ownership of, affiliation with, or credit for any third-party data or services.</p>
+                    <p>If you represent any service listed here and have questions or concerns regarding its inclusion, please feel free to reach out — any reasonable request will be acknowledged promptly and respectfully.</p>
+                </section>
+            </div>
+        </div>
     </div>
 
     <template id="collapsible-card-template">
