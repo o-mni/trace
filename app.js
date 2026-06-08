@@ -74,6 +74,10 @@ const homographMap = {
 
 const selectors = {
     themeToggle: document.querySelector("#theme-toggle"),
+    historyTab: document.querySelector("#history-tab"),
+    historySidebar: document.querySelector("#history-sidebar"),
+    sidebarOverlay: document.querySelector("#sidebar-overlay"),
+    closeHistory: document.querySelector("#close-history"),
     analysisToggleBtn: document.querySelector("#analysis-toggle-btn"),
     analysisExpander: document.querySelector("#analysis-expander"),
     inputTitle: document.querySelector("#input-title"),
@@ -812,17 +816,23 @@ selectors.themeToggle.addEventListener("click", () => {
 
 selectors.analysisToggleBtn?.addEventListener("click", toggleAnalysisPanel);
 
-if (selectors.historyToggle) {
-    selectors.historyToggle.addEventListener("click", () => {
-        selectors.historySidebar?.classList.toggle("hidden");
-    });
-}
+const openSidebar = () => {
+    selectors.historySidebar?.classList.remove("hidden");
+    selectors.sidebarOverlay?.classList.remove("hidden");
+};
 
-if (selectors.closeHistory) {
-    selectors.closeHistory.addEventListener("click", () => {
-        selectors.historySidebar?.classList.add("hidden");
-    });
-}
+const closeSidebar = () => {
+    selectors.historySidebar?.classList.add("hidden");
+    selectors.sidebarOverlay?.classList.add("hidden");
+};
+
+selectors.historyTab?.addEventListener("click", () => {
+    const isOpen = !selectors.historySidebar?.classList.contains("hidden");
+    isOpen ? closeSidebar() : openSidebar();
+});
+
+selectors.closeHistory?.addEventListener("click", closeSidebar);
+selectors.sidebarOverlay?.addEventListener("click", closeSidebar);
 
 selectors.investigationForm.addEventListener("submit", (event) => {
     event.preventDefault();
