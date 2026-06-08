@@ -74,8 +74,8 @@ const homographMap = {
 
 const selectors = {
     themeToggle: document.querySelector("#theme-toggle"),
-    checkModeBtn: document.querySelector("#check-mode-btn"),
-    analysisModeBtn: document.querySelector("#analysis-mode-btn"),
+    analysisToggleBtn: document.querySelector("#analysis-toggle-btn"),
+    analysisExpander: document.querySelector("#analysis-expander"),
     inputTitle: document.querySelector("#input-title"),
     urlInput: document.querySelector("#url-input"),
     emailInput: document.querySelector("#email-input"),
@@ -95,7 +95,8 @@ const selectors = {
     exportPdf: document.querySelector("#export-pdf"),
     exportPanel: document.querySelector("#export-panel"),
     clearHistory: document.querySelector("#clear-history"),
-    collapsibleTemplate: document.querySelector("#collapsible-card-template")
+    collapsibleTemplate: document.querySelector("#collapsible-card-template"),
+    summaryPanel: document.querySelector("#summary-panel")
 };
 
 const sanitize = (value) => {
@@ -480,9 +481,7 @@ const addToHistory = (record) => {
 
 const renderCollapsibleSections = (sections) => {
     selectors.findingsSections.innerHTML = "";
-    const showFindings = STATE.mode === "analysis" && sections.length > 0;
-    selectors.findingsPanel?.classList.toggle("hidden", !showFindings);
-    if (!showFindings) return;
+    if (!sections.length) return;
     sections.forEach((section) => {
         selectors.findingsSections.appendChild(createCollapsibleSection(section));
     });
@@ -514,9 +513,9 @@ const renderInvestigation = (input, type, mode) => {
     }
     STATE.type = type;
     const context = buildInvestigationContext(formatted, type);
-    context.analysisReady = mode === "analysis";
+    context.analysisReady = true;
     stateContext = context;
-    const report = generateReportData(context, mode === "analysis");
+    const report = generateReportData(context, true);
     const dateNow = new Date().toLocaleString();
     const entry = {
         ioc: formatted,
@@ -597,7 +596,7 @@ const renderInvestigation = (input, type, mode) => {
         htmlContent: `<div class="info-card"><h3>Scoring Breakdown</h3><ul class="info-list">${report.breakdown.map(item => `<li>${sanitize(item.label)}<strong>+${item.value}</strong></li>`).join("")}</ul></div>`
     });
 
-    if (mode === "analysis") {
+    if (true) {
         analysisSections.push({
             title: "Infrastructure & DNS",
             meta: "Network & hosting overview",
@@ -641,8 +640,13 @@ const renderInvestigation = (input, type, mode) => {
 
     renderCollapsibleSections(analysisSections);
     updateVerdictUI(report.score, analysisSections.length);
-    const showExport = STATE.mode === "analysis" && stateContext.analysisReady;
-    selectors.exportPanel?.classList.toggle("hidden", !showExport);
+    selectors.findingsPanel?.classList.add("hidden");
+    selectors.exportPanel?.classList.add("hidden");
+    selectors.summaryPanel?.classList.remove("hidden");
+    selectors.analysisExpander?.classList.remove("hidden");
+    if (selectors.analysisToggleBtn) {
+        selectors.analysisToggleBtn.classList.remove("expanded");
+    }
 };
 
 const updateVerdictUI = (score, evidenceCount) => {
@@ -659,14 +663,12 @@ const updateVerdictUI = (score, evidenceCount) => {
     selectors.keyIndicators.innerHTML = summaryIndicators.map(item => `<li>${sanitize(item)}</li>`).join("");
 };
 
-const handleModeToggle = (mode) => {
-    STATE.mode = mode;
-    selectors.checkModeBtn.classList.toggle("active", mode === "check");
-    selectors.analysisModeBtn.classList.toggle("active", mode === "analysis");
-    const showExport = mode === "analysis" && Boolean(stateContext?.analysisReady);
-    selectors.exportPanel?.classList.toggle("hidden", !showExport);
-    const showFindings = mode === "analysis" && Boolean(stateContext?.analysisReady);
-    selectors.findingsPanel?.classList.toggle("hidden", !showFindings);
+const toggleAnalysisPanel = () => {
+    const btn = selectors.analysisToggleBtn;
+    const isHidden = selectors.findingsPanel?.classList.contains("hidden");
+    selectors.findingsPanel?.classList.toggle("hidden", !isHidden);
+    selectors.exportPanel?.classList.toggle("hidden", !isHidden);
+    btn?.classList.toggle("expanded", isHidden);
 };
 
 const downloadFile = (filename, content, type) => {
@@ -808,8 +810,19 @@ selectors.themeToggle.addEventListener("click", () => {
     }
 });
 
-selectors.checkModeBtn.addEventListener("click", () => handleModeToggle("check"));
-selectors.analysisModeBtn.addEventListener("click", () => handleModeToggle("analysis"));
+selectors.analysisToggleBtn?.addEventListener("click", toggleAnalysisPanel);
+
+if (selectors.historyToggle) {
+    selectors.historyToggle.addEventListener("click", () => {
+        selectors.historySidebar?.classList.toggle("hidden");
+    });
+}
+
+if (selectors.closeHistory) {
+    selectors.closeHistory.addEventListener("click", () => {
+        selectors.historySidebar?.classList.add("hidden");
+    });
+}
 
 selectors.investigationForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -840,4 +853,3 @@ selectors.clearHistory.addEventListener("click", () => {
 });
 
 attachHistoryListeners();
-handleModeToggle("check");

@@ -19,27 +19,25 @@
                 </div>
             </div>
             <div class="nav-actions">
+                <button id="history-toggle" class="icon-btn" title="Toggle history sidebar">📋</button>
                 <button id="theme-toggle" class="icon-btn" title="Toggle theme">🌙</button>
-                <div class="mode-switch" role="group" aria-label="Investigation mode">
-                    <button id="check-mode-btn" class="mode-btn active" data-mode="check">Check</button>
-                    <button id="analysis-mode-btn" class="mode-btn" data-mode="analysis">Analysis</button>
-                </div>
             </div>
         </header>
 
         <main class="layout-grid">
-            <aside class="side-panel" aria-label="Investigation navigation">
-                <section class="panel-card" id="history-panel">
-                    <div class="panel-header">
-                        <h2>Investigation History</h2>
-                        <button id="clear-history" class="text-btn">Clear</button>
-                    </div>
-                    <div id="history-list" class="list-group" aria-live="polite"></div>
-                </section>
+            <aside class="history-sidebar hidden" id="history-sidebar">
+                <div class="sidebar-header">
+                    <h2>Investigation History</h2>
+                    <button id="close-history" class="icon-btn" title="Close history">✕</button>
+                </div>
+                <div id="history-list" class="list-group" aria-live="polite"></div>
+                <div class="sidebar-footer">
+                    <button id="clear-history" class="secondary" style="width: 100%;">Clear History</button>
+                </div>
             </aside>
 
             <section class="workspace" aria-label="Investigation workspace">
-                <section class="panel-card input-panel">
+                <section class="panel-card input-panel centered-panel">
                     <div class="panel-header">
                         <div>
                             <h2 id="input-title">URL / Email Investigation</h2>
@@ -58,7 +56,7 @@
                     </form>
                 </section>
 
-                <section class="panel-card summary-panel">
+                <section class="panel-card summary-panel hidden" id="summary-panel">
                     <div class="summary-grid">
                         <article class="summary-card verdict-card" id="verdict-card">
                             <div class="summary-title">Final Verdict</div>
@@ -82,6 +80,13 @@
                         </article>
                     </div>
                 </section>
+
+                <div class="analysis-expander hidden" id="analysis-expander">
+                    <button type="button" id="analysis-toggle-btn" class="analysis-expand-btn">
+                        <span>Deep Analysis</span>
+                        <span class="expand-icon">▼</span>
+                    </button>
+                </div>
 
                 <section class="panel-card findings-panel hidden" id="findings-panel">
                     <div class="panel-header">
@@ -112,6 +117,7 @@
                 </section>
             </section>
         </main>
+
     </div>
 
     <template id="collapsible-card-template">
