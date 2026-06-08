@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LINKINT | Cybersecurity Investigation Workbench</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="app-shell">
+        <header class="top-nav" role="banner">
+            <div class="brand-group">
+                <div class="brand-mark">LI</div>
+                <div>
+                    <div class="brand-name">LINKINT</div>
+                    <div class="brand-tag">Cybersecurity Investigation Workbench</div>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button id="theme-toggle" class="icon-btn" title="Toggle theme">🌙</button>
+                <div class="mode-switch" role="group" aria-label="Investigation mode">
+                    <button id="check-mode-btn" class="mode-btn active" data-mode="check">Check</button>
+                    <button id="analysis-mode-btn" class="mode-btn" data-mode="analysis">Analysis</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="layout-grid">
+            <aside class="side-panel" aria-label="Investigation navigation">
+                <section class="panel-card" id="history-panel">
+                    <div class="panel-header">
+                        <h2>Investigation History</h2>
+                        <button id="clear-history" class="text-btn">Clear</button>
+                    </div>
+                    <div id="history-list" class="list-group" aria-live="polite"></div>
+                </section>
+            </aside>
+
+            <section class="workspace" aria-label="Investigation workspace">
+                <section class="panel-card input-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="input-title">URL / Email Investigation</h2>
+                            <p class="panel-description">Enter either a URL or an email address to start the
+                                investigation.</p>
+                        </div>
+                    </div>
+                    <form id="investigation-form" class="investigation-form">
+                        <label class="visually-hidden" for="url-input">URL or domain input</label>
+                        <input id="url-input" type="text" placeholder="Paste URL or domain for investigation"
+                            autocomplete="off" />
+                        <label class="visually-hidden" for="email-input">Email input</label>
+                        <input id="email-input" type="email" placeholder="Enter email for investigation"
+                            autocomplete="off" />
+                        <button type="submit" class="primary large">Run Investigation</button>
+                    </form>
+                </section>
+
+                <section class="panel-card summary-panel">
+                    <div class="summary-grid">
+                        <article class="summary-card verdict-card" id="verdict-card">
+                            <div class="summary-title">Final Verdict</div>
+                            <div class="summary-value" id="verdict-label">Awaiting input</div>
+                            <p class="mini-text" id="verdict-desc">Use the investigation panel to gather analyst-grade
+                                findings.</p>
+                        </article>
+                        <article class="summary-card risk-card">
+                            <div class="summary-title">Risk Score</div>
+                            <div class="risk-meter">
+                                <span id="risk-score">0</span>
+                                <span class="risk-label" id="risk-verdict">Unknown</span>
+                            </div>
+                            <div class="risk-bar"><span id="risk-fill"></span></div>
+                        </article>
+                        <article class="summary-card indicator-card" id="key-indicators-card">
+                            <div class="summary-title">Key Indicators</div>
+                            <ul id="key-indicators" class="indicator-list">
+                                <li>Awaiting investigation</li>
+                            </ul>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="panel-card findings-panel hidden" id="findings-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Detailed Findings</h2>
+                            <p class="panel-description">Use collapsible evidence and intelligence cards to progress
+                                analyst workflows.</p>
+                        </div>
+                    </div>
+
+                    <div class="collapsible-group" id="findings-sections"></div>
+                </section>
+
+                <section class="panel-card export-panel hidden" id="export-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Export</h2>
+                            <p class="panel-description">Generate reports, markdown, or SOC summary tickets.</p>
+                        </div>
+                    </div>
+                    <div class="export-actions">
+                        <button id="export-html" class="secondary">Download HTML Report</button>
+                        <button id="export-md" class="secondary">Download Markdown</button>
+                        <button id="copy-summary" class="secondary">Copy SOC Summary</button>
+                        <button id="export-pdf" class="secondary">Print / Export PDF</button>
+                    </div>
+                    <div class="export-note">Export features are available after a successful analysis.</div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <template id="collapsible-card-template">
+        <article class="collapsible-card">
+            <button type="button" class="collapsible-toggle" aria-expanded="false">
+                <span class="collapsible-title"></span>
+                <span class="collapsible-meta"></span>
+            </button>
+            <div class="collapsible-content" hidden></div>
+        </article>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
