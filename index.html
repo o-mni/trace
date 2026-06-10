@@ -1,196 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="black">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LINKINT | Cybersecurity Investigation Workbench</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secura is a minimalist cybersecurity publication for CTF walkthroughs and malware analysis.">
+    <title>Secura</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23050505'/%3E%3Cpath d='M32 12 48 18v12c0 11-6.8 17.8-16 22-9.2-4.2-16-11-16-22V18l16-6Z' fill='%2322d3ee' fill-opacity='.18' stroke='%2322d3ee' stroke-width='2.5'/%3E%3Ctext x='32' y='38' text-anchor='middle' font-size='24' font-family='Arial, sans-serif' font-weight='700' fill='%23f5f5f5'%3ES%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles-new.css">
 </head>
 
 <body>
-    <div class="app-shell">
-        <header class="top-nav" role="banner">
-            <div class="brand-group">
-                <div class="brand-mark">LI</div>
-                <div>
-                    <div class="brand-name">LINKINT</div>
-                    <div class="brand-tag">Cybersecurity Investigation Workbench</div>
-                </div>
-            </div>
-            <div class="nav-actions">
-                <button id="info-btn" class="icon-btn info-btn" title="About LINKINT &amp; API Credits">ⓘ</button>
-                <button id="theme-toggle" class="icon-btn" title="Toggle theme">🌙</button>
+    <div class="page-shell minimal-home">
+        <header class="site-header minimal-header">
+            <div class="container">
+                <nav class="site-nav minimal-nav" aria-label="Primary navigation">
+                    <a class="brand" href="index.html">
+                        <span class="brand-mark">S</span>
+                        <span class="brand-copy">
+                            <span class="brand-name">Secura</span>
+                            <span class="brand-tag">Minimal security publication</span>
+                        </span>
+                    </a>
+                </nav>
             </div>
         </header>
 
-        <main class="layout-grid">
-            <button class="history-tab" id="history-tab" title="Toggle history">History</button>
-            <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
-            <aside class="history-sidebar hidden" id="history-sidebar">
-                <div class="sidebar-header">
-                    <h2>Investigation History</h2>
-                    <button id="close-history" class="icon-btn" title="Close history">✕</button>
+        <main>
+            <section class="minimal-hero" id="stories">
+                <div class="container minimal-shell">
+                    <div class="minimal-copy">
+                        <div class="eyebrow">Secura</div>
+                        <h1 class="minimal-title">Open a story and read it.</h1>
+                        <p class="minimal-lead">
+                            A clean front page with two stories. Each card opens a dedicated article page for a more professional reading experience.
+                        </p>
+                    </div>
+
+                    <div class="workspace-grid">
+                        <a class="workspace-card" href="ctf-walkthrough-login-panel.html">
+                            <span class="workspace-kicker">CTF Walkthrough</span>
+                            <h2 class="workspace-title">Breaking a Simple Login Panel Challenge</h2>
+                            <p class="workspace-summary">
+                                A short web challenge walkthrough showing reconnaissance, input testing, SQL injection discovery, and flag retrieval.
+                            </p>
+                            <span class="workspace-link">Read article</span>
+                        </a>
+
+                        <a class="workspace-card" href="malware-analysis-loader.html">
+                            <span class="workspace-kicker">Malware Analysis</span>
+                            <h2 class="workspace-title">Basic Loader Analysis on a Small Windows Sample</h2>
+                            <p class="workspace-summary">
+                                A compact analysis of a simple loader sample covering strings, imports, process flow, and a small IOC set.
+                            </p>
+                            <span class="workspace-link">Read article</span>
+                        </a>
+                    </div>
                 </div>
-                <div id="history-list" class="list-group" aria-live="polite"></div>
-                <div class="sidebar-footer">
-                    <button id="clear-history" class="secondary" style="width: 100%;">Clear History</button>
-                </div>
-            </aside>
-
-            <section class="workspace" aria-label="Investigation workspace">
-                <section class="panel-card input-panel centered-panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2 id="input-title">URL / Domain Investigation</h2>
-                            <p class="panel-description">Enter a URL or domain to begin triage.</p>
-                        </div>
-                    </div>
-                    <form id="investigation-form" class="investigation-form">
-                        <label class="visually-hidden" for="main-input">URL or domain</label>
-                        <input id="main-input" type="text" placeholder="Enter a URL or domain…"
-                            autocomplete="off" spellcheck="false" />
-                        <button type="submit" class="primary large">Investigate</button>
-                    </form>
-                </section>
-
-                <section class="panel-card summary-panel hidden" id="summary-panel">
-                    <div id="ioc-type-badge" class="ioc-type-badge" aria-live="polite"></div>
-                    <div class="summary-grid">
-                        <article class="summary-card verdict-card" id="verdict-card">
-                            <div class="summary-title">Final Verdict</div>
-                            <div class="summary-value" id="verdict-label">Awaiting input</div>
-                            <p class="mini-text" id="verdict-desc">Use the investigation panel to gather analyst-grade
-                                findings.</p>
-                        </article>
-                        <article class="summary-card risk-card">
-                            <div class="summary-title">Risk Score</div>
-                            <div class="risk-meter">
-                                <span id="risk-score">0</span>
-                                <span class="risk-label" id="risk-verdict">Unknown</span>
-                            </div>
-                            <div class="risk-bar"><span id="risk-fill"></span></div>
-                        </article>
-                        <article class="summary-card indicator-card" id="key-indicators-card">
-                            <div class="summary-title">Key Indicators</div>
-                            <ul id="key-indicators" class="indicator-list">
-                                <li>Awaiting investigation</li>
-                            </ul>
-                        </article>
-                    </div>
-                </section>
-
-                <div class="analysis-expander hidden" id="analysis-expander">
-                    <button type="button" id="analysis-toggle-btn" class="analysis-expand-btn">
-                        <span>Deep Analysis</span>
-                        <span class="expand-icon">▼</span>
-                    </button>
-                </div>
-
-                <section class="panel-card findings-panel hidden" id="findings-panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2>Detailed Findings</h2>
-                            <p class="panel-description">Use collapsible evidence and intelligence cards to progress
-                                analyst workflows.</p>
-                        </div>
-                    </div>
-
-                    <div class="collapsible-group" id="findings-sections"></div>
-                </section>
-
-                <section class="panel-card export-panel hidden" id="export-panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2>Export</h2>
-                            <p class="panel-description">Generate reports, markdown, or SOC summary tickets.</p>
-                        </div>
-                    </div>
-                    <div class="export-actions">
-                        <button id="export-html" class="secondary">Download HTML Report</button>
-                        <button id="export-md" class="secondary">Download Markdown</button>
-                        <button id="copy-summary" class="secondary">Copy SOC Summary</button>
-                        <button id="export-pdf" class="secondary">Print / Export PDF</button>
-                    </div>
-                    <div class="export-note">Export features are available after a successful analysis.</div>
-                </section>
             </section>
         </main>
-
     </div>
-
-    <!-- Info / About modal -->
-    <div class="info-modal hidden" id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
-        <div class="info-modal-backdrop" id="info-modal-backdrop"></div>
-        <div class="info-modal-card">
-            <div class="info-modal-header">
-                <h2 id="info-modal-title">About LINKINT</h2>
-                <button class="icon-btn" id="info-modal-close" title="Close">✕</button>
-            </div>
-            <div class="info-modal-body">
-                <div class="info-beta-banner">
-                    <span class="info-beta-pill">BETA</span>
-                    <span>This tool is in active development — features may be incomplete or change without notice.</span>
-                </div>
-                <section class="info-section">
-                    <h3>What is LINKINT?</h3>
-                    <p>LINKINT is a lightweight, browser-based OSINT workbench. It originated as a personal project to support basic <strong>Incident Response (IR)</strong> tasks — quickly triaging URLs and domains during an investigation without having to switch between multiple tools. It is intended for personal use only and is not affiliated with, endorsed by, or associated with any commercial product or organisation.</p>
-                </section>
-                <section class="info-section">
-                    <h3>How it works</h3>
-                    <p>LINKINT does not perform any independent threat analysis. It acts as a client-side interface that queries publicly available third-party APIs and formats their responses in a structured, readable layout. All intelligence, data, and findings displayed originate entirely from the service providers listed below — LINKINT is simply a presentation layer built for fast IR triage.</p>
-                </section>
-                <section class="info-section">
-                    <h3>Third-party services &amp; credits</h3>
-                    <p class="info-note">All data, findings, and intellectual property displayed by LINKINT belong exclusively to the respective service providers. No ownership, authorship, or credit is claimed by this project.</p>
-                    <ul class="info-api-list">
-                        <li class="info-api-item">
-                            <span class="info-api-name">VirusTotal</span>
-                            <span class="info-api-desc">URL, domain, and file threat intelligence</span>
-                            <a class="info-api-link" href="https://www.virustotal.com" target="_blank" rel="noopener noreferrer">virustotal.com ↗</a>
-                        </li>
-                        <li class="info-api-item">
-                            <span class="info-api-name">AbuseIPDB</span>
-                            <span class="info-api-desc">IP address abuse and threat reporting database</span>
-                            <a class="info-api-link" href="https://www.abuseipdb.com" target="_blank" rel="noopener noreferrer">abuseipdb.com ↗</a>
-                        </li>
-                        <li class="info-api-item">
-                            <span class="info-api-name">OTX AlienVault</span>
-                            <span class="info-api-desc">Open threat exchange and indicator intelligence</span>
-                            <a class="info-api-link" href="https://otx.alienvault.com" target="_blank" rel="noopener noreferrer">otx.alienvault.com ↗</a>
-                        </li>
-                        <li class="info-api-item">
-                            <span class="info-api-name">URLhaus</span>
-                            <span class="info-api-desc">Malicious URL and malware distribution tracking</span>
-                            <a class="info-api-link" href="https://urlhaus.abuse.ch" target="_blank" rel="noopener noreferrer">urlhaus.abuse.ch ↗</a>
-                        </li>
-                        <li class="info-api-item">
-                            <span class="info-api-name">ThreatFox</span>
-                            <span class="info-api-desc">IOC sharing and threat intelligence database</span>
-                            <a class="info-api-link" href="https://threatfox.abuse.ch" target="_blank" rel="noopener noreferrer">threatfox.abuse.ch ↗</a>
-                        </li>
-                    </ul>
-                </section>
-                <section class="info-section info-disclaimer">
-                    <h3>Disclaimer</h3>
-                    <p>This tool is a personal, non-commercial project intended solely for educational and research use. All trademarks, brand names, data, and intellectual property presented through LINKINT remain the exclusive property of their respective service providers. This project does not claim ownership of, affiliation with, or credit for any third-party data or services.</p>
-                    <p>If you represent any service listed here and have questions or concerns regarding its inclusion, please feel free to reach out — any reasonable request will be acknowledged promptly and respectfully.</p>
-                </section>
-            </div>
-        </div>
-    </div>
-
-    <template id="collapsible-card-template">
-        <article class="collapsible-card">
-            <button type="button" class="collapsible-toggle" aria-expanded="false">
-                <span class="collapsible-title"></span>
-                <span class="collapsible-meta"></span>
-            </button>
-            <div class="collapsible-content" hidden></div>
-        </article>
-    </template>
-
-    <script src="app.js"></script>
 </body>
 
 </html>
